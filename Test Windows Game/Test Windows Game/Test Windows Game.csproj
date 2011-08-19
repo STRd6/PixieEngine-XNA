@@ -110,23 +110,27 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="JavaScriptContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Game1.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="corelib.js">
+    <Content Include="scripts\corelib.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Game.ico" />
-    <Content Include="gamelib.js">
+    <Content Include="scripts\gamelib.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="GameThumbnail.png" />
-    <Content Include="Hockey.js">
+    <Content Include="scripts\Hockey.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="json2.js">
+    <Content Include="scripts\json2.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="scripts\XNA-Shiv.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

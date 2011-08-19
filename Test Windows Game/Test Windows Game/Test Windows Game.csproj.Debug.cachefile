@@ -1,6 +1,7 @@
 Content\McGriffLogo.xnb
 Content\clink0.xnb
-corelib.js
-gamelib.js
-Hockey.js
-json2.js
+scripts\corelib.js
+scripts\gamelib.js
+scripts\Hockey.js
+scripts\json2.js
+scripts\XNA-Shiv.js
