@@ -1,3 +1,30 @@
+var App;
+App = {
+  "directories": {
+    "animations": "animations",
+    "data": "data",
+    "entities": "entities",
+    "images": "images",
+    "lib": "lib",
+    "sounds": "sounds",
+    "source": "src",
+    "test": "test",
+    "tilemaps": "tilemaps"
+  },
+  "width": 480,
+  "height": 320,
+  "library": false,
+  "main": "main",
+  "wrapMain": true,
+  "hotSwap": true,
+  "name": "SurfN-2-Sur5",
+  "author": "STRd6",
+  "libs": {
+    "00_gamelib.js": "https://github.com/STRd6/gamelib/raw/pixie/gamelib.js",
+    "browserlib.js": "https://github.com/STRd6/browserlib/raw/pixie/browserlib.js",
+    "extralib.js": "https://github.com/STRd6/extralib/raw/pixie/extralib.js"
+  }
+};;
 ;
 ;
 ;
@@ -1241,7 +1268,7 @@ Number.prototype.constrainRotation = function() {
     target -= Math.TAU;
   }
   while (target < -Math.PI) {
-    target += MATH.TAU;
+    target += Math.TAU;
   }
   return target;
 };
@@ -3605,7 +3632,7 @@ Emitterable = function(I, self) {
   /**
   Called before the engine draws the game objects on the canvas.
   
-  The current camera transform <b>is</b> applied.
+  The current camera transform is applied.
   
   @name beforeDraw
   @methodOf Engine#
@@ -3614,10 +3641,19 @@ Emitterable = function(I, self) {
   /**
   Called after the engine draws on the canvas.
   
-  The current camera transform <b>is not</b> applied, you may
-  choose to apply it yourself using <code>I.cameraTransform</code>.
+  The current camera transform is applied.
   
   @name draw
+  @methodOf Engine#
+  @event
+  */
+  /**
+  Called after the engine draws.
+  
+  The current camera transform is not applied. This is great for
+  adding overlays.
+  
+  @name overlay
   @methodOf Engine#
   @event
   */
@@ -3661,13 +3697,13 @@ Emitterable = function(I, self) {
       return self.trigger("afterUpdate");
     };
     draw = function() {
+      if (I.clear) {
+        I.canvas.clear();
+      } else if (I.backgroundColor) {
+        I.canvas.fill(I.backgroundColor);
+      }
       I.canvas.withTransform(I.cameraTransform, function(canvas) {
         var drawObjects;
-        if (I.clear) {
-          canvas.clear();
-        } else if (I.backgroundColor) {
-          canvas.fill(I.backgroundColor);
-        }
         self.trigger("beforeDraw", canvas);
         if (I.zSort) {
           drawObjects = I.objects.copy().sort(function(a, b) {
@@ -3676,9 +3712,10 @@ Emitterable = function(I, self) {
         } else {
           drawObjects = I.objects;
         }
-        return drawObjects.invoke("draw", canvas);
+        drawObjects.invoke("draw", canvas);
+        return self.trigger("draw", I.canvas);
       });
-      return self.trigger("draw", I.canvas);
+      return self.trigger("overlay", I.canvas);
     };
     step = function() {
       if (!I.paused || frameAdvance) {
@@ -4369,4 +4406,5 @@ draw anything to the screen until the image has been loaded.
   };
   return (typeof exports !== "undefined" && exports !== null ? exports : this)["Sprite"] = Sprite;
 })();;
+;
 ;

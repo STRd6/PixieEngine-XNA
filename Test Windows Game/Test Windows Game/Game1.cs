@@ -21,17 +21,10 @@ namespace Test_Windows_Game
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        SoundEffect soundEffect;
         JavaScriptContext js = new JavaScriptContext();
         Dictionary<string, SoundEffect> sounds = new Dictionary<string, SoundEffect>();
+        Dictionary<string, Song> music = new Dictionary<string, Song>();
         Dictionary<string, Texture2D> sprites = new Dictionary<string, Texture2D>();
-
-        // This is a texture we can render.
-        Texture2D myTexture;
-
-        // Set the coordinates to draw the sprite at.
-        Vector2 spritePosition = new Vector2(100, 100);
-        Vector2 spriteSpeed = new Vector2(30, 90);
 
         public Game1()
         {
@@ -47,9 +40,11 @@ namespace Test_Windows_Game
         /// </summary>
         protected override void Initialize()
         {
+            InitGraphicsMode(480, 320, false);
+
             // TODO: Add your initialization logic here
             js.RunVoid(ReadJS("json2"));
-            js.RunVoid(ReadJS("gamelib"));
+            js.RunVoid(ReadJS("SurfN-2-Sur5_core"));
             js.RunVoid(ReadJS("XNA-Shiv"));
 
             js.SetParameter("log", (Action<object>)((o) => { if (o != null) { log(o.ToString()); } else { log("null"); } }));
@@ -57,7 +52,22 @@ namespace Test_Windows_Game
             js.Run("color = 0");
 
             js.SetParameter("Sound", new {
-                play = (Action<string>)((name) => { sounds[name].Play(); })
+                play = (Action<string>)((name) => {
+                    sounds[name] = Content.Load<SoundEffect>("sounds\\" + name);
+                    sounds[name].Play(); 
+                })
+            });
+
+            js.SetParameter("Music", new {
+                play = (Action<string>)((name) => {
+                    // TODO: Pre-load these
+                    // Also look into looping these as songs rather than sound effects
+                    sounds[name] = Content.Load<SoundEffect>("sounds\\" + name);
+
+                    SoundEffectInstance s = sounds[name].CreateInstance();
+                    s.IsLooped = true;
+                    s.Play();
+                })
             });
 
             js.SetParameter("__XNA__Sprite", new
@@ -65,25 +75,43 @@ namespace Test_Windows_Game
                 loadByName = (Func<string, Texture2D>)
                 ((name) => {
                     log("Loading sprite: " + name);
+                    // TODO: Pre-load these
+                    sprites[name] = Content.Load<Texture2D>("images\\" + name);
                     return sprites[name];
                 })
             });
 
             js.SetParameter("__XNA__Canvas", new
             {
-                drawImage = (Action<Texture2D, int, int, int, int, int, int, int, int>)
+                clear = (Action)(() => {
+                    GraphicsDevice.Clear(Color.Black);
+                }),
+                fill = (Action)(() =>
+                {
+                    GraphicsDevice.Clear(Color.Black);
+                }),
+                drawImage = (Action<Texture2D, double, double, double, double, double, double, double, double>)
                 ((texture, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight) =>
                 {
                     spriteBatch.Draw(
                         texture,
-                        new Rectangle(destX, destY, destWidth, destHeight),
-                        new Rectangle(sourceX, sourceY, sourceWidth, sourceHeight),
+                        new Rectangle((int)destX, (int)destY, (int)destWidth, (int)destHeight),
+                        new Rectangle((int)sourceX, (int)sourceY, (int)sourceWidth, (int)sourceHeight),
                         Color.White
                     );
                 }),
             });
 
-            js.RunVoid("canvas = Canvas();");
+            js.SetParameter("__XNA__Keyboard", new {
+                checkKey = (Func<string, bool>)((name) => {
+                    return false;
+                }),
+            });
+
+            js.SetParameter("keydown", new {
+            });
+
+            js.RunVoid(ReadJS("SurfN_game"));
 
             base.Initialize();
         }
@@ -98,12 +126,8 @@ namespace Test_Windows_Game
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
-            sprites["mcGriff"] = myTexture = Content.Load<Texture2D>("McGriffLogo");
 
-            js.SetParameter("img", myTexture);
-            js.RunVoid("mcGriff = GameObject({x: 500, y: 50, sprite: 'mcGriff'});");
-
-            sounds["clink0"] = soundEffect = Content.Load<SoundEffect>("clink0");
+            sounds["clink0"] = Content.Load<SoundEffect>("clink0");
         }
 
         /// <summary>
@@ -130,50 +154,7 @@ namespace Test_Windows_Game
                 this.Exit();
             }
 
-            // Move the sprite by speed, scaled by elapsed time.
-            spritePosition +=
-                spriteSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-            int MaxX =
-                graphics.GraphicsDevice.Viewport.Width - myTexture.Width;
-            int MinX = 0;
-            int MaxY =
-                graphics.GraphicsDevice.Viewport.Height - myTexture.Height;
-            int MinY = 0;
-
-            // Check for bounce.
-            if (spritePosition.X > MaxX)
-            {
-                spriteSpeed.X *= -1;
-                spritePosition.X = MaxX;
-                soundEffect.Play();
-            }
-
-            else if (spritePosition.X < MinX)
-            {
-                spriteSpeed.X *= -1;
-                spritePosition.X = MinX;
-                soundEffect.Play();
-            }
-
-            if (spritePosition.Y > MaxY)
-            {
-                spriteSpeed.Y *= -1;
-                spritePosition.Y = MaxY;
-                soundEffect.Play();
-            }
-
-            else if (spritePosition.Y < MinY)
-            {
-                spriteSpeed.Y *= -1;
-                spritePosition.Y = MinY;
-                soundEffect.Play();
-            }
-
-            js.SetParameter("width", myTexture.Width);
-            js.SetParameter("height", myTexture.Height);
-            js.SetParameter("posX", (int)spritePosition.X);
-            js.SetParameter("posY", (int)spritePosition.Y);
+            js.RunVoid("engine.update();");
 
             base.Update(gameTime);
         }
@@ -184,22 +165,12 @@ namespace Test_Windows_Game
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            //int c = Convert.ToInt32(JavaScript.Run("return color += 1;"));
-            js.Run("clear(0, 0, color);");
-
-            Matrix matrix = new Matrix(
-                1, 0, 0, 0, 
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1
-            );
-
             // TODO: Add your drawing code here
-            spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend, null, null, null, null, matrix);
+            spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend);
 
-            js.RunVoid("mcGriff.draw(canvas);");
+            js.RunVoid("engine.draw();");
 
-            js.RunVoid("canvas.drawImage(img, 0, 0, width, height, posX, posY, width, height);");
+            // js.RunVoid("canvas.drawImage(img, 0, 0, width, height, posX, posY, width, height);");
             //spriteBatch.Draw(myTexture, spritePosition, Color.White);
 
             spriteBatch.End();
@@ -220,6 +191,54 @@ namespace Test_Windows_Game
             StreamWriter textOut = new StreamWriter(new FileStream("log.txt", FileMode.Append, FileAccess.Write));
             textOut.WriteLine(System.DateTime.Now.ToLongTimeString() + msg);
             textOut.Close();
+        }
+
+        /// <summary>
+        /// Attempt to set the display mode to the desired resolution.  Itterates through the display
+        /// capabilities of the default graphics adapter to determine if the graphics adapter supports the
+        /// requested resolution.  If so, the resolution is set and the function returns true.  If not,
+        /// no change is made and the function returns false.
+        /// </summary>
+        /// <param name="iWidth">Desired screen width.</param>
+        /// <param name="iHeight">Desired screen height.</param>
+        /// <param name="bFullScreen">True if you wish to go to Full Screen, false for Windowed Mode.</param>
+        private bool InitGraphicsMode(int iWidth, int iHeight, bool bFullScreen)
+        {
+            // If we aren't using a full screen mode, the height and width of the window can
+            // be set to anything equal to or smaller than the actual screen size.
+            if (bFullScreen == false)
+            {
+                if ((iWidth <= GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width)
+                    && (iHeight <= GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height))
+                {
+                    graphics.PreferredBackBufferWidth = iWidth;
+                    graphics.PreferredBackBufferHeight = iHeight;
+                    graphics.IsFullScreen = bFullScreen;
+                    graphics.ApplyChanges();
+                    return true;
+                }
+            }
+            else
+            {
+                // If we are using full screen mode, we should check to make sure that the display
+                // adapter can handle the video mode we are trying to set.  To do this, we will
+                // iterate thorugh the display modes supported by the adapter and check them against
+                // the mode we want to set.
+                foreach (DisplayMode dm in GraphicsAdapter.DefaultAdapter.SupportedDisplayModes)
+                {
+                    // Check the width and height of each mode against the passed values
+                    if ((dm.Width == iWidth) && (dm.Height == iHeight))
+                    {
+                        // The mode is supported, so set the buffer formats, apply changes and return
+                        graphics.PreferredBackBufferWidth = iWidth;
+                        graphics.PreferredBackBufferHeight = iHeight;
+                        graphics.IsFullScreen = bFullScreen;
+                        graphics.ApplyChanges();
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

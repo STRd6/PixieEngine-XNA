@@ -6,6 +6,23 @@ Canvas = function() {
   transformStack = [];
   currentTransform = Matrix.IDENTITY;
   return {
+    clear: function() {
+      return __XNA__Canvas.clear();
+    },
+	createPattern: function() {
+	  // TODO
+	},
+    fill: function(color) {
+      return __XNA__Canvas.fill();
+    },
+	fillColor: function() {
+	  // TODO
+	  return this;
+	},
+	fillRect: function() {
+	  // TODO
+	  return this;
+	},
     drawImage: function(image, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight) {
       var x, y, _ref;
       _ref = currentTransform.transformPoint(Point(destX, destY)), x = _ref.x, y = _ref.y;
