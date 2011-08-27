@@ -3477,6 +3477,7 @@ var __slice = Array.prototype.slice;
     if (!parsedColor) {
       throw "" + (args.join(',')) + " is an unknown color";
     }
+    parsedColor = parsedColor.copy();
     rgbMap = parsedColor.splice(0, 3).map(function(channel) {
       return channel.round();
     });
@@ -4569,7 +4570,7 @@ draw anything to the screen until the image has been loaded.
       },
       fill: function(canvas, x, y, width, height, repeat) {
         canvas.fillTiledRect(image, sourceX, sourceY, width, height, x, y, width, height);
-        return this;
+		return this;
       },
       width: width,
       height: height

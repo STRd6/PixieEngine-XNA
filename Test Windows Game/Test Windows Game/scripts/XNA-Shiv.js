@@ -26,6 +26,8 @@ Canvas = function() {
       a = (fillColor.a() * 0xFF) & 0xFF;
 
       XNA_Canvas.fill(r, g, b, a);
+
+	  return this;
     },
     fillColor: function(color) {
       if (color) {
@@ -42,7 +44,9 @@ Canvas = function() {
       b = fillColor.b() & 0xFF;
       a = (fillColor.a() * 0xFF) & 0xFF;
       _ref = currentTransform.transformPoint(Point(x, y)), x = _ref.x, y = _ref.y;
-      return XNA_Canvas.fillRect(x, y, width, height, r, g, b, a);
+      XNA_Canvas.fillRect(x, y, width, height, r, g, b, a);
+
+	  return this;
     },
     fillTiledRect: function(image, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight) {
       var x, y, _ref;
