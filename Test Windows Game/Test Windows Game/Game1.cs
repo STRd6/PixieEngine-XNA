@@ -20,11 +20,14 @@ namespace Test_Windows_Game
     public class Game1 : Microsoft.Xna.Framework.Game
     {
         GraphicsDeviceManager graphics;
+        Texture2D solidTexture;
         SpriteBatch spriteBatch;
         JavaScriptContext js = new JavaScriptContext();
         Dictionary<string, SoundEffect> sounds = new Dictionary<string, SoundEffect>();
         Dictionary<string, Song> music = new Dictionary<string, Song>();
         Dictionary<string, Texture2D> sprites = new Dictionary<string, Texture2D>();
+        KeyboardState keyboardState;
+        Keys k = new Keys();
 
         public Game1()
         {
@@ -42,9 +45,11 @@ namespace Test_Windows_Game
         {
             InitGraphicsMode(480, 320, false);
 
+            this.TargetElapsedTime = System.TimeSpan.FromMilliseconds(1000 / 30f); 
+
             // TODO: Add your initialization logic here
             js.RunVoid(ReadJS("json2"));
-            js.RunVoid(ReadJS("SurfN-2-Sur5_core"));
+            js.RunVoid(ReadJS("gamelib"));
             js.RunVoid(ReadJS("XNA-Shiv"));
 
             js.SetParameter("log", (Action<object>)((o) => { if (o != null) { log(o.ToString()); } else { log("null"); } }));
@@ -53,6 +58,7 @@ namespace Test_Windows_Game
 
             js.SetParameter("Sound", new {
                 play = (Action<string>)((name) => {
+                    log("Loading sound: " + name);
                     sounds[name] = Content.Load<SoundEffect>("sounds\\" + name);
                     sounds[name].Play(); 
                 })
@@ -60,17 +66,18 @@ namespace Test_Windows_Game
 
             js.SetParameter("Music", new {
                 play = (Action<string>)((name) => {
+                    log("Loading music: " + name);
                     // TODO: Pre-load these
                     // Also look into looping these as songs rather than sound effects
-                    sounds[name] = Content.Load<SoundEffect>("sounds\\" + name);
+                    music[name] = Content.Load<Song>("sounds\\" + name);
 
-                    SoundEffectInstance s = sounds[name].CreateInstance();
-                    s.IsLooped = true;
-                    s.Play();
+                    Song s = music[name];
+                    MediaPlayer.IsRepeating = true;
+                    MediaPlayer.Play(s);
                 })
             });
 
-            js.SetParameter("__XNA__Sprite", new
+            js.SetParameter("XNA_Sprite", new
             {
                 loadByName = (Func<string, Texture2D>)
                 ((name) => {
@@ -81,36 +88,54 @@ namespace Test_Windows_Game
                 })
             });
 
-            js.SetParameter("__XNA__Canvas", new
+            js.SetParameter("XNA_Canvas", new
             {
                 clear = (Action)(() => {
                     GraphicsDevice.Clear(Color.Black);
                 }),
-                fill = (Action)(() =>
-                {
-                    GraphicsDevice.Clear(Color.Black);
+                fill = (Action<int, int, int, int>)((r, g, b, a) => {
+                    GraphicsDevice.Clear(new Color(r, g, b, a));
                 }),
-                drawImage = (Action<Texture2D, double, double, double, double, double, double, double, double>)
-                ((texture, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight) =>
-                {
+                fillRect = (Action<double, double, double, double, int, int, int, int>)((x, y, width, height, r, g, b, a) => {
+                    spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.Opaque);
+                    spriteBatch.Draw(solidTexture, new Rectangle((int)x, (int)y, (int)width, (int)height), new Color(r, g, b, a));
+                    spriteBatch.End();
+                }),
+                fillTiledRect = (Action<Texture2D, double, double, double, double, double, double, double, double>)
+                ((texture, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight) => {
+                    spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.Opaque, SamplerState.LinearWrap, DepthStencilState.Default, RasterizerState.CullNone);
+                    
+                    Rectangle destRect = new Rectangle((int)destX, (int)destY, (int)destWidth, (int)destHeight);
                     spriteBatch.Draw(
                         texture,
                         new Rectangle((int)destX, (int)destY, (int)destWidth, (int)destHeight),
                         new Rectangle((int)sourceX, (int)sourceY, (int)sourceWidth, (int)sourceHeight),
                         Color.White
                     );
+
+                    spriteBatch.End();
+                }),
+                drawImage = (Action<Texture2D, double, double, double, double, double, double, double, double>)
+                ((texture, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight) =>
+                {
+                    spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend);
+                    spriteBatch.Draw(
+                        texture,
+                        new Rectangle((int)destX, (int)destY, (int)destWidth, (int)destHeight),
+                        new Rectangle((int)sourceX, (int)sourceY, (int)sourceWidth, (int)sourceHeight),
+                        Color.White
+                    );
+                    spriteBatch.End();
                 }),
             });
 
-            js.SetParameter("__XNA__Keyboard", new {
-                checkKey = (Func<string, bool>)((name) => {
-                    return false;
+            js.SetParameter("XNA_Keyboard", new {
+                keyDown = (Func<string, bool>)((name) => {
+                    return keyboardState.IsKeyDown((Keys)Enum.Parse(typeof(Keys), name, false));
                 }),
             });
 
-            js.SetParameter("keydown", new {
-            });
-
+            js.RunVoid(ReadJS("surfn_config"));
             js.RunVoid(ReadJS("SurfN_game"));
 
             base.Initialize();
@@ -124,6 +149,9 @@ namespace Test_Windows_Game
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            solidTexture = new Texture2D(GraphicsDevice, 1, 1);
+            solidTexture.SetData(new Color[] { Color.White });
 
             // TODO: use this.Content to load your game content here
 
@@ -147,6 +175,7 @@ namespace Test_Windows_Game
         protected override void Update(GameTime gameTime)
         {
             GamePadState currentState = GamePad.GetState(PlayerIndex.One);
+            keyboardState = Keyboard.GetState();
 
             // Allows the game to exit
             if (currentState.Buttons.Back == ButtonState.Pressed)
@@ -166,14 +195,14 @@ namespace Test_Windows_Game
         protected override void Draw(GameTime gameTime)
         {
             // TODO: Add your drawing code here
-            spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend);
+            
 
             js.RunVoid("engine.draw();");
 
             // js.RunVoid("canvas.drawImage(img, 0, 0, width, height, posX, posY, width, height);");
             //spriteBatch.Draw(myTexture, spritePosition, Color.White);
 
-            spriteBatch.End();
+            
 
             base.Draw(gameTime);
         }
@@ -189,7 +218,7 @@ namespace Test_Windows_Game
 
         static void log(string msg) { 
             StreamWriter textOut = new StreamWriter(new FileStream("log.txt", FileMode.Append, FileAccess.Write));
-            textOut.WriteLine(System.DateTime.Now.ToLongTimeString() + msg);
+            textOut.WriteLine(System.DateTime.Now.ToLongTimeString() + " -- " + msg);
             textOut.Close();
         }
 

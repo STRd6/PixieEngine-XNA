@@ -21,7 +21,10 @@ Content\sounds\crash.xnb
 Content\sounds\land.xnb
 Content\sounds\splash.xnb
 Content\sounds\wave.xnb
+Content\white.xnb
 Content\sounds\SurfN-2-Sur5.xnb
+Content\sounds\SurfN-2-Sur5.wma
+scripts\surfn_config.js
 scripts\corelib.js
 scripts\gamelib.js
 scripts\Hockey.js
