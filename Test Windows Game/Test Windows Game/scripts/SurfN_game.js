@@ -335,6 +335,7 @@ engine.bind("afterUpdate", function() {
   }
 });
 engine.bind("draw", function(canvas) {
+  XNA_Canvas.fillText("test", 50, 50, 255, 255, 255, 1)
   if (DEBUG_DRAW) {
     return engine.find("Player, Rock").invoke("trigger", "drawDebug", canvas);
   }

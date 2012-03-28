@@ -88,6 +88,7 @@ namespace Test_Windows_Game
                 })
             });
 
+            SpriteFont spriteFont = Content.Load<SpriteFont>("SpriteFont1");
             js.SetParameter("XNA_Canvas", new
             {
                 clear = (Action)(() => {
@@ -103,7 +104,7 @@ namespace Test_Windows_Game
                 }),
                 fillTiledRect = (Action<Texture2D, double, double, double, double, double, double, double, double>)
                 ((texture, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight) => {
-                    spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.Opaque, SamplerState.LinearWrap, DepthStencilState.Default, RasterizerState.CullNone);
+                    spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend, SamplerState.LinearWrap, DepthStencilState.Default, RasterizerState.CullNone);
                     
                     Rectangle destRect = new Rectangle((int)destX, (int)destY, (int)destWidth, (int)destHeight);
                     spriteBatch.Draw(
@@ -113,6 +114,11 @@ namespace Test_Windows_Game
                         Color.White
                     );
 
+                    spriteBatch.End();
+                }),
+                fillText = (Action<string, double, double, int, int, int, int>)((text, x, y, r, g, b, a) => {
+                    spriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend);
+                    spriteBatch.DrawString(spriteFont, text, new Vector2((float)x, (float)y), new Color(r, g, b, a));
                     spriteBatch.End();
                 }),
                 drawImage = (Action<Texture2D, double, double, double, double, double, double, double, double>)
