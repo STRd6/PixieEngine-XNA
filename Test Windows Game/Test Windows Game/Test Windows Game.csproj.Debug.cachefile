@@ -17,13 +17,13 @@ Content\images\player_8.xnb
 Content\images\rocks.xnb
 Content\images\wave.xnb
 Content\images\wave1.xnb
+Content\white.xnb
+Content\SpriteFont1.xnb
 Content\sounds\crash.xnb
 Content\sounds\land.xnb
-Content\sounds\splash.xnb
 Content\sounds\wave.xnb
-Content\white.xnb
+Content\sounds\splash.xnb
 Content\sounds\SurfN-2-Sur5.xnb
-Content\SpriteFont1.xnb
 Content\sounds\SurfN-2-Sur5.wma
 scripts\surfn_config.js
 scripts\corelib.js

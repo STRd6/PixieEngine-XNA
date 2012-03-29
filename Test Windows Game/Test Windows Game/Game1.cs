@@ -58,19 +58,12 @@ namespace Test_Windows_Game
 
             js.SetParameter("Sound", new {
                 play = (Action<string>)((name) => {
-                    log("Loading sound: " + name);
-                    sounds[name] = Content.Load<SoundEffect>("sounds\\" + name);
-                    sounds[name].Play(); 
+                    sounds[name].Play();
                 })
             });
 
             js.SetParameter("Music", new {
                 play = (Action<string>)((name) => {
-                    log("Loading music: " + name);
-                    // TODO: Pre-load these
-                    // Also look into looping these as songs rather than sound effects
-                    music[name] = Content.Load<Song>("sounds\\" + name);
-
                     Song s = music[name];
                     MediaPlayer.IsRepeating = true;
                     MediaPlayer.Play(s);
@@ -81,9 +74,6 @@ namespace Test_Windows_Game
             {
                 loadByName = (Func<string, Texture2D>)
                 ((name) => {
-                    log("Loading sprite: " + name);
-                    // TODO: Pre-load these
-                    sprites[name] = Content.Load<Texture2D>("images\\" + name);
                     return sprites[name];
                 })
             });
@@ -142,7 +132,6 @@ namespace Test_Windows_Game
             });
 
             js.RunVoid(ReadJS("surfn_config"));
-            js.RunVoid(ReadJS("SurfN_game"));
 
             base.Initialize();
         }
@@ -161,7 +150,37 @@ namespace Test_Windows_Game
 
             // TODO: use this.Content to load your game content here
 
-            sounds["clink0"] = Content.Load<SoundEffect>("clink0");
+            // Load all images as sprites
+            DirectoryInfo directory = new DirectoryInfo(Content.RootDirectory + "\\images");
+            FileInfo[] files = directory.GetFiles("*.*");
+            foreach (FileInfo file in files) {
+                string name = Path.GetFileNameWithoutExtension(file.Name);
+                log("Loading sprite: " + name);
+                sprites[name] = Content.Load<Texture2D>("images\\" + name);
+            }
+
+            // Load all sounds
+            directory = new DirectoryInfo(Content.RootDirectory + "\\sounds");
+            files = directory.GetFiles("*.*");
+            foreach (FileInfo file in files) {
+                string name = Path.GetFileNameWithoutExtension(file.Name);
+
+                if (file.Extension == ".wav") {
+                    log("Loading sound: " + name);
+                    try {
+                        sounds[name] = SoundEffect.FromStream(file.OpenRead());
+                    } catch (Exception) {}
+                }
+
+                // TODO: load mp3s for real, currently using content pipeline and wma files
+                if (file.Extension == ".mp3" || file.Extension == ".wma") {
+                    log("Loading music: " + name);
+                    music[name] = Content.Load<Song>("sounds\\" + name);
+                }
+            }
+
+            // Load the game code after all the resources have been loaded
+            js.RunVoid(ReadJS("SurfN_game"));
         }
 
         /// <summary>
